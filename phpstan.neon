@@ -1,0 +1,17 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+
+parameters:
+    paths:
+        - app/
+        - bootstrap/app.php
+        - config/
+        - database/
+        - routes/
+
+    level: 7
+
+    # Constructor arguments are checked at runtime even where their PHPDoc
+    # narrows the type, so do not flag those checks as redundant.
+    treatPhpDocTypesAsCertain: false
