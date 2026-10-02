@@ -1,0 +1,89 @@
+name: bulk-csv-importer
+
+# Upload limits are set in one place (.env) and passed to nginx, PHP and
+# Laravel so they always agree. See README "Large uploads".
+x-app: &app
+  build:
+    context: docker/app
+    args:
+      USER_ID: ${USER_ID:-1000}
+      GROUP_ID: ${GROUP_ID:-1000}
+  image: bulk-csv-importer-app:dev
+  volumes:
+    - .:/var/www/html
+  env_file: .env
+  environment:
+    DB_HOST: mysql
+    REDIS_HOST: redis
+    MAIL_HOST: mailpit
+    MAIL_PORT: 1025
+    PHP_UPLOAD_MAX_FILE_SIZE: ${UPLOAD_LIMIT:-1100M}
+    PHP_POST_MAX_SIZE: ${UPLOAD_LIMIT:-1100M}
+    NGINX_CLIENT_MAX_BODY_SIZE: ${UPLOAD_LIMIT:-1100M}
+    # Set to "ipv4" on hosts without IPv6.
+    NGINX_LISTEN_IP_PROTOCOL: ${NGINX_LISTEN_IP_PROTOCOL:-all}
+    PHP_MAX_EXECUTION_TIME: 300
+    PHP_MEMORY_LIMIT: 256M
+    PHP_OPCACHE_ENABLE: 1
+  depends_on:
+    mysql:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  app:
+    <<: *app
+    ports:
+      - "${APP_PORT:-8080}:8080"
+
+  horizon:
+    <<: *app
+    command: ["php", "/var/www/html/artisan", "horizon"]
+    stop_signal: SIGTERM
+    healthcheck:
+      test: ["CMD", "healthcheck-horizon"]
+      start_period: 10s
+
+  scheduler:
+    <<: *app
+    command: ["php", "/var/www/html/artisan", "schedule:work"]
+    stop_signal: SIGTERM
+    healthcheck:
+      test: ["CMD", "healthcheck-schedule"]
+      start_period: 10s
+
+  mysql:
+    image: mysql:8.4.11
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-importer}
+      MYSQL_USER: ${DB_USERNAME:-importer}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root-secret}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/importer.cnf:ro
+    ports:
+      - "${FORWARD_DB_PORT:-33060}:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DB_ROOT_PASSWORD:-root-secret}"]
+      interval: 5s
+      retries: 30
+
+  redis:
+    image: redis:7.4-alpine
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - "${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025"
+
+volumes:
+  mysql-data:
+  redis-data:

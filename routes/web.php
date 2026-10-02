@@ -2,25 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\CsvUploadController;
+Route::inertia('/', 'welcome')->name('home');
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
-Route::get('/', function () {
-    return view('welcome');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::inertia('dashboard', 'dashboard')->name('dashboard');
 });
 
-Route::get('/upload', [CsvUploadController::class, 'index']);
-
-Route::post('/upload', [CsvUploadController::class, 'upload']);
-
-Route::get('/batch', [CsvUploadController::class, 'batch']);
+require __DIR__.'/settings.php';
