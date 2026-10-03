@@ -73,6 +73,19 @@ return [
             'after_commit' => false,
         ],
 
+        // Import chunk jobs can run for many minutes (a sequential import is
+        // one job), so they get their own connection whose retry_after is
+        // longer than the job timeout. Otherwise a slow chunk would be handed
+        // to a second worker while the first is still on it.
+        'imports' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => env('IMPORTER_QUEUE', 'imports'),
+            'retry_after' => (int) env('IMPORTER_RETRY_AFTER', 3660),
+            'block_for' => 5,
+            'after_commit' => false,
+        ],
+
         'deferred' => [
             'driver' => 'deferred',
         ],
