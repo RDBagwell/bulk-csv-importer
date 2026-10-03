@@ -38,6 +38,16 @@ return [
             'report' => false,
         ],
 
+        // Uploaded import files: outside the public path, never served
+        // directly, shared by the web and worker containers.
+        'imports' => [
+            'driver' => 'local',
+            'root' => env('IMPORTER_STORAGE_PATH', storage_path('app/private/imports')),
+            'serve' => false,
+            'throw' => true,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
