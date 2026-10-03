@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import inertia from '@inertiajs/vite';
 import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import babel from '@rolldown/plugin-babel';
@@ -8,10 +9,16 @@ import { defineConfig, lazyPlugins } from 'vite-plus';
 
 export default defineConfig({
     plugins: lazyPlugins(() => [
-        laravel({
-            input: ['resources/css/app.css', 'resources/js/app.tsx'],
-            refresh: true,
-        }),
+        // Under Vitest there are no app assets to serve, and the Laravel
+        // plugin refuses to start a dev server when CI is set.
+        ...(process.env.VITEST
+            ? []
+            : [
+                  laravel({
+                      input: ['resources/css/app.css', 'resources/js/app.tsx'],
+                      refresh: true,
+                  }),
+              ]),
         inertia(),
         react(),
         babel({
@@ -22,6 +29,11 @@ export default defineConfig({
             formVariants: true,
         }),
     ]),
+    resolve: {
+        alias: {
+            '@': fileURLToPath(new URL('./resources/js', import.meta.url)),
+        },
+    },
     server: {
         watch: {
             ignored: [
