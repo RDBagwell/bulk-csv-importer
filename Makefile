@@ -1,8 +1,10 @@
 # One command to boot everything: `make up`.
 COMPOSE := docker compose
 APP     := $(COMPOSE) exec app
-export USER_ID  ?= $(shell id -u)
-export GROUP_ID ?= $(shell id -g)
+# The containers run as your user so files they write stay editable. Root
+# cannot be remapped this way, so root hosts fall back to 1000.
+export USER_ID  ?= $(shell [ "$$(id -u)" = 0 ] && echo 1000 || id -u)
+export GROUP_ID ?= $(shell [ "$$(id -g)" = 0 ] && echo 1000 || id -g)
 
 .PHONY: up down build install migrate fresh test lint analyse bench-data shell logs
 
