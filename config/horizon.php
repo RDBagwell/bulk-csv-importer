@@ -219,7 +219,7 @@ return [
             'connection' => 'imports',
             'queue' => [env('IMPORTER_QUEUE', 'imports')],
             'balance' => false,
-            'minProcesses' => 1,
+            'minProcesses' => (int) env('IMPORTER_WORKERS', 4),
             'maxProcesses' => (int) env('IMPORTER_WORKERS', 4),
             'maxTime' => 0,
             'maxJobs' => 0,
