@@ -3,7 +3,7 @@
 Import millions of CSV rows into MySQL **reliably, quickly and safely, with
 flat memory use**, and watch it happen live in the browser.
 
-This project began as a small exercise: a Laravel app that accepted a CSV
+The first version of this project was a small Laravel app that accepted a CSV
 upload, cut it into 100-row chunks and processed them as a queued batch. It
 works for a few thousand rows. At a million rows it runs out of memory. This
 rebuild solves the same problem properly and measures both versions on the
@@ -11,7 +11,15 @@ same machine, with the same data.
 
 ## Before and after: 1,000,000 rows
 
-{{SUMMARY_TABLE}}
+| | Before (original) | After, sequential | After, parallel (4 workers) |
+|---|---:|---:|---:|
+| **Wall time** | **fails** at PHP's default 128 MiB limit; 1,220 s (20 min) with no limit | **32.6 s** | **11.1 s** |
+| **Rows / second** | 820 | 30,666 | 89,791 |
+| **Peak memory** | 223 MiB in the upload request, growing with the file | **46.5 MiB per job** (75 MiB worker RSS), flat from 10k to 5M rows | same, per worker |
+| Bad row | crashes its chunk; the rest of the chunk is lost | reported (line, column, reason), import continues | same |
+| Worker killed mid-import | rows lost | resumes from last batch, exact counts | same |
+
+5M rows: 157 s sequential, 51 s parallel, same memory.
 
 Measured on a 4 vCPU / 15 GiB cloud VM with MySQL 8.4 (binary log on, fully
 durable commits) on the same machine. Every number, the exact commands and
@@ -67,7 +75,39 @@ re-runs only the chunks that failed.
 
 ## Key decisions and trade-offs
 
-{{DECISIONS}}
+- **Parallel by default, with small chunks.** Parallel was never slower
+  than sequential and was 2.4–3× faster from 100k rows up. 2 MiB chunks
+  beat 8 MiB ones (10.9 s vs 14.3 s at 1M rows): more chunks than workers
+  keep every worker busy until the end. Sequential mode is kept; it needs
+  no pre-scan and is the simplest thing that works.
+- **2,000 rows per insert batch.** Fastest in the sweep (500: +18% time;
+  5,000–10,000: slightly slower and more memory). One batch = one
+  transaction = rows + the chunk's checkpoint.
+- **Idempotency from the data, not from the queue.** The data table's
+  primary key is `(import_id, line_number)` and every write is an upsert, so
+  replaying a batch is harmless; checkpoints just avoid the rework. Upsert
+  with a no-op update rather than `INSERT IGNORE`, which would also hide
+  real data errors. No foreign key and no secondary indexes on the data
+  table: they would cost on every inserted row and nothing queries them.
+- **Line numbers are record numbers.** With quoted newlines, a file's
+  physical lines and its CSV records differ; errors report the record
+  number (the header is 1), which is what a spreadsheet shows as the row.
+- **Not `LOAD DATA`.** It loads 1M rows in 4.7 s, 2.4× faster, but with
+  `LOCAL` it coerces bad values (`N/A` → `0.00`), stores invalid enums and
+  reports only a warning count. Validation and per-row errors are the
+  point of this tool, and `LOCAL INFILE` is a security liability, so it
+  stays off. Measured and explained in
+  [docs/BENCHMARKS.md](docs/BENCHMARKS.md#load-data-comparison).
+- **Validation rules are plain objects, not Laravel's validator,** because
+  they run per cell, millions of times. Values such as `DECIMAL(18,2)` stay
+  strings all the way to MySQL, never floats.
+- **Chunk counters are the source of truth while running.** Each chunk's
+  counters are written in the same transaction as its rows, so the status
+  endpoint sums a few dozen chunk rows instead of counting millions, and
+  the sums stay exact across retries. The error cap is enforced exactly
+  across workers with a short lock on the import row.
+- **Polling, not websockets.** A 2-second poll of one small endpoint is
+  enough for a progress bar and needs no extra infrastructure.
 
 ## Run it
 
