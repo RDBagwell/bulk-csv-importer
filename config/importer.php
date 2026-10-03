@@ -51,15 +51,19 @@ return [
     | mode: "sequential" streams the whole file in one job, "parallel" splits
     | it into byte ranges on record boundaries and processes them as a job
     | batch, "auto" picks parallel for files at or above parallel_min_bytes.
-    | The defaults come from docs/BENCHMARKS.md.
+    |
+    | The defaults come from docs/BENCHMARKS.md: parallel was never slower
+    | than sequential and 2.4-3x faster from 100k rows up; 1-2 MiB chunks
+    | beat 8 MiB ones (more chunks balance better across workers); 2,000
+    | rows per insert batch was the fastest batch size.
     |
     */
 
-    'mode' => env('IMPORTER_MODE', 'auto'),
+    'mode' => env('IMPORTER_MODE', 'parallel'),
 
-    'parallel_min_bytes' => (int) env('IMPORTER_PARALLEL_MIN_BYTES', 16 * 1024 * 1024),
+    'parallel_min_bytes' => (int) env('IMPORTER_PARALLEL_MIN_BYTES', 2 * 1024 * 1024),
 
-    'chunk_bytes' => (int) env('IMPORTER_CHUNK_BYTES', 8 * 1024 * 1024),
+    'chunk_bytes' => (int) env('IMPORTER_CHUNK_BYTES', 2 * 1024 * 1024),
 
     'insert_batch_size' => (int) env('IMPORTER_INSERT_BATCH_SIZE', 2000),
 
