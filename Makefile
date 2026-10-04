@@ -47,8 +47,9 @@ fresh: ## Drop all tables and migrate again
 down:
 	$(COMPOSE) down
 
+# The DB overrides keep the suite off the dev database; see phpunit.xml.
 test:
-	$(APP) php artisan test
+	$(COMPOSE) exec -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: -e DB_URL= app php artisan test
 	$(APP) npm test
 
 lint:

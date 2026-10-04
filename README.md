@@ -167,8 +167,12 @@ docker compose exec app php artisan migrate --force
 docker compose up -d --wait
 ```
 
-Tests: `docker compose exec app php artisan test` and
-`docker compose exec app npm test`.
+Tests:
+
+```powershell
+docker compose exec -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: -e DB_URL= app php artisan test
+docker compose exec app npm test
+```
 
 ### Large uploads
 
@@ -214,7 +218,8 @@ Stop Horizon first so it does not compete for the queue.
 ## Tests
 
 ```bash
-php artisan test   # Pest: unit + feature, SQLite in memory (CI also runs them on MySQL)
+make test          # Pest + Vitest in Docker, SQLite in memory (CI also runs Pest on MySQL)
+php artisan test   # Pest outside Docker
 npm test           # Vitest
 ```
 
