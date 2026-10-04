@@ -39,6 +39,7 @@ services:
 
   horizon:
     <<: *app
+    restart: unless-stopped
     command: ["php", "/var/www/html/artisan", "horizon"]
     stop_signal: SIGTERM
     healthcheck:
@@ -47,6 +48,7 @@ services:
 
   scheduler:
     <<: *app
+    restart: unless-stopped
     command: ["php", "/var/www/html/artisan", "schedule:work"]
     stop_signal: SIGTERM
     healthcheck:

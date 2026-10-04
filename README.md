@@ -158,12 +158,13 @@ the code is shared from the Windows drive):
 
 ```powershell
 Copy-Item .env.example .env
-docker compose up -d --build --wait
+docker compose up -d --build --wait app mailpit
 docker compose exec app composer install --no-interaction
 docker compose exec app php artisan key:generate
 docker compose exec app npm ci
 docker compose exec app npm run build
 docker compose exec app php artisan migrate --force
+docker compose up -d --wait
 ```
 
 Tests: `docker compose exec app php artisan test` and
