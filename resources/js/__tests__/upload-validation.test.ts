@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { validateUpload } from '@/lib/upload-validation';
 
 const MB = 1024 * 1024;

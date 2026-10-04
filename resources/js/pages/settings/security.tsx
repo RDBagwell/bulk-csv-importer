@@ -11,7 +11,7 @@ import { edit } from '@/routes/security';
 // oxfmt-ignore
 type Props = {
     passwordRules: string;
-} ;
+};
 
 export default function Security(props: Props) {
     const passwordInput = useRef<HTMLInputElement>(null);
