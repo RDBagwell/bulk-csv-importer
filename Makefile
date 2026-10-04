@@ -19,9 +19,12 @@ export GROUP_ID ?= $(shell [ "$$(id -g)" = 0 ] && echo 1000 || id -g)
 
 .PHONY: up down build install migrate fresh test lint analyse bench-data shell logs
 
+# Horizon and the scheduler run artisan, which needs vendor/, so they start
+# only after dependencies are installed and the database is migrated.
 up: .env ## Build, start the stack, install dependencies, migrate and build assets
-	$(COMPOSE) up -d --build --wait
+	$(COMPOSE) up -d --build --wait app mailpit
 	$(MAKE) install migrate
+	$(COMPOSE) up -d --wait
 	@echo "App:     http://localhost:$${APP_PORT:-8080}"
 	@echo "Horizon: http://localhost:$${APP_PORT:-8080}/horizon"
 	@echo "Mailpit: http://localhost:$${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}"
