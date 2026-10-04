@@ -1,4 +1,15 @@
 # One command to boot everything: `make up`.
+
+# The recipes below are POSIX shell. Native Windows make (PowerShell / cmd)
+# runs them through cmd.exe and fails with confusing errors, so stop early
+# with directions instead. Git Bash sets MSYSTEM and has a shell; it passes.
+ifeq ($(OS),Windows_NT)
+ifeq ($(MSYSTEM),)
+$(error This Makefile needs a Unix shell. On Windows, run it inside WSL2 (see README "Windows"), \
+or run the docker compose commands listed there from PowerShell)
+endif
+endif
+
 COMPOSE := docker compose
 APP     := $(COMPOSE) exec app
 # The containers run as your user so files they write stay editable. Root

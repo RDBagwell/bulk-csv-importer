@@ -111,7 +111,7 @@ re-runs only the chunks that failed.
 
 ## Run it
 
-Requirements: Docker with Compose, and `make`.
+Requirements: Docker with Compose, and `make` (on Windows, see [Windows](#windows)).
 
 ```bash
 git clone https://github.com/RDBagwell/bulk-csv-importer.git
@@ -131,6 +131,43 @@ front end and runs the migrations. Then:
 Other targets: `make test`, `make lint`, `make analyse`, `make shell`,
 `make logs`, `make down`. On a host without IPv6, set
 `NGINX_LISTEN_IP_PROTOCOL=ipv4` in `.env`.
+
+### Windows
+
+Use WSL2. The Makefile is POSIX shell, and Docker reads files from the WSL
+filesystem far faster than from a Windows drive.
+
+1. In an administrator PowerShell: `wsl --install -d Ubuntu`, then restart
+   and open **Ubuntu** from the Start menu.
+2. In Docker Desktop: **Settings → Resources → WSL Integration**, enable
+   **Ubuntu**, **Apply & restart**.
+3. In the Ubuntu terminal, clone into your Linux home directory (not under
+   `/mnt/c`, and not in a OneDrive folder, which would try to sync
+   `vendor/` and `node_modules/`):
+
+   ```bash
+   sudo apt update && sudo apt install -y make git
+   cd ~ && git clone https://github.com/RDBagwell/bulk-csv-importer.git
+   cd bulk-csv-importer && make up
+   ```
+
+4. Open <http://localhost:8080> in your Windows browser.
+
+Without WSL, the same steps as `make up` from PowerShell (slower, because
+the code is shared from the Windows drive):
+
+```powershell
+Copy-Item .env.example .env
+docker compose up -d --build --wait
+docker compose exec app composer install --no-interaction
+docker compose exec app php artisan key:generate
+docker compose exec app npm ci
+docker compose exec app npm run build
+docker compose exec app php artisan migrate --force
+```
+
+Tests: `docker compose exec app php artisan test` and
+`docker compose exec app npm test`.
 
 ### Large uploads
 
