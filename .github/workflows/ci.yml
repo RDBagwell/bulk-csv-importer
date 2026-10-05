@@ -99,6 +99,20 @@ jobs:
       - name: Run tests
         run: php artisan test
 
+      # Docker Compose passes .env to the containers as real environment
+      # variables. Run the suite once more with those values set, so tests
+      # that only pass when nothing is set in the environment fail here too.
+      - name: Run tests with the local .env values in the environment
+        if: matrix.database == 'sqlite'
+        env:
+          APP_ENV: local
+          APP_DEBUG: 'true'
+          SESSION_DRIVER: database
+          QUEUE_CONNECTION: redis
+          CACHE_STORE: redis
+          MAIL_MAILER: smtp
+        run: php artisan test
+
   frontend:
     name: Front end (lint, types, tests, build)
     runs-on: ubuntu-latest
