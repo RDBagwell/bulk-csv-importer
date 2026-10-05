@@ -32,7 +32,7 @@ class DownloadImportErrorsController extends Controller
                 return;
             }
 
-            $writer = Writer::createFromStream($output);
+            $writer = Writer::from($output);
             $writer->addFormatter($formula->escapeRecord(...));
             $writer->insertOne(['line', 'column', 'message', 'raw_excerpt']);
 

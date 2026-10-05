@@ -52,7 +52,9 @@ export default function ShowImport(props: Props) {
                             <span>
                                 ·{' '}
                                 {summary.mode === 'parallel'
-                                    ? `${summary.chunk_count} chunks in parallel`
+                                    ? summary.chunk_count === 1
+                                        ? '1 chunk'
+                                        : `${summary.chunk_count} chunks in parallel`
                                     : 'sequential'}
                             </span>
                         </div>
