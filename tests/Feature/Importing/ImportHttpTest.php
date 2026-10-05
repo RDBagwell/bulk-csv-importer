@@ -258,7 +258,7 @@ describe('error report', function () {
         $response = $this->actingAs($user)->get(route('imports.errors', $import));
         $response->assertOk()->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
 
-        $records = iterator_to_array(Reader::createFromString($response->streamedContent())->setEscape('')->getRecords(), false);
+        $records = iterator_to_array(Reader::fromString($response->streamedContent())->setEscape('')->getRecords(), false);
 
         expect($records[0])->toBe(['line', 'column', 'message', 'raw_excerpt'])
             ->and(array_column(array_slice($records, 1), 2))->toBe([

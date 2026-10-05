@@ -57,7 +57,7 @@ function parseWhole(string $contents): array
 
     return array_map(
         'array_values',
-        iterator_to_array(Reader::createFromPath($path)->setEscape('')->includeEmptyRecords()->getRecords(), false),
+        iterator_to_array(Reader::from($path, 'r')->setEscape('')->includeEmptyRecords()->getRecords(), false),
     );
 }
 

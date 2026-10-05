@@ -38,7 +38,7 @@ final class RangeReader
 
         $this->stream = $stream;
 
-        $reader = Reader::createFromStream($stream)
+        $reader = Reader::from($stream)
             ->setDelimiter(',')
             ->setEnclosure('"')
             ->setEscape('')
