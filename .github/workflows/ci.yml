@@ -10,8 +10,11 @@ on:
 permissions:
   contents: read
 
+# On a PR, a new push supersedes the older runs, so cancel them. On master,
+# group by commit so no run cancels or displaces another: every merged
+# commit gets a finished result.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: true
 
 jobs:
