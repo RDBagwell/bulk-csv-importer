@@ -50,11 +50,13 @@ class BenchmarkImportCommand extends Command
             return self::FAILURE;
         }
 
-        $source = (string) $this->argument('file');
-        $mode = ImportMode::tryFrom((string) $this->option('mode'));
+        $source = $this->argument('file');
+        $mode = $this->option('mode');
+        $mode = is_string($mode) ? ImportMode::tryFrom($mode) : null;
         $workers = max(0, (int) $this->option('workers'));
+        $connection = $this->option('connection');
 
-        if (! is_file($source) || $mode === null) {
+        if (! is_string($source) || ! is_file($source) || $mode === null || ! is_string($connection)) {
             $this->components->error('Give an existing file and --mode=parallel or --mode=sequential.');
 
             return self::FAILURE;
@@ -82,7 +84,7 @@ class BenchmarkImportCommand extends Command
             'chunk_bytes' => $this->option('chunk-mb') !== null ? (int) ((float) $this->option('chunk-mb') * 1_048_576) : null,
         ]);
 
-        $connection = $workers === 0 ? 'sync' : (string) $this->option('connection');
+        $connection = $workers === 0 ? 'sync' : $connection;
         $queue = (string) config('importer.queue.name');
         config(['importer.queue.connection' => $connection]);
 
@@ -139,8 +141,10 @@ class BenchmarkImportCommand extends Command
 
         $this->report($result);
 
-        if ($path = $this->option('json')) {
-            file_put_contents((string) $path, json_encode($result).PHP_EOL, FILE_APPEND);
+        $path = $this->option('json');
+
+        if (is_string($path) && $path !== '') {
+            file_put_contents($path, json_encode($result).PHP_EOL, FILE_APPEND);
         }
 
         $disk->delete($stored);

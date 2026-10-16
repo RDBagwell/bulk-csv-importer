@@ -20,7 +20,8 @@ class GenerateCsvCommand extends Command
     {
         $rows = (int) $this->argument('rows');
         $errors = (float) $this->option('errors');
-        $path = $this->option('out') ?: storage_path("app/generated/trade-{$rows}.csv");
+        $out = $this->option('out');
+        $path = is_string($out) && $out !== '' ? $out : storage_path("app/generated/trade-{$rows}.csv");
 
         if (! is_dir(dirname($path))) {
             mkdir(dirname($path), 0755, true);
