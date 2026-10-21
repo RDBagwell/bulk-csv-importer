@@ -6,7 +6,10 @@
 FROM node:22.22-bookworm-slim AS node
 
 # PHP-FPM + nginx in one container, with pdo_mysql, redis, pcntl and opcache.
-FROM serversideup/php:8.4-fpm-nginx-v4.5.1
+# Release-suffixed tags (-vX.Y.Z) are frozen when published and never pick up
+# PHP patch releases, so the PHP patch version is pinned here as well and has
+# to be bumped by hand. 8.4.27 is the minimum for CVE-2026-109618/109619.
+FROM serversideup/php:8.4.27-fpm-nginx-v4.5.3
 
 USER root
 
